@@ -1,1 +1,4 @@
 streamlit_geolocation
+pandas
+streamlit_folium
+folium
