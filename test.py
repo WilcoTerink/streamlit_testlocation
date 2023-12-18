@@ -7,24 +7,6 @@ import folium
 
 # https://folium.streamlit.app/draw_support
 
-# """
-# # My first app
-# Here's our first attempt at using data to create a table:
-# """
-
-# import streamlit as st
-# import pandas as pd
-# df = pd.DataFrame({
-#   'first column': [1, 2, 3, 4],
-#   'second column': [10, 20, 30, 40]
-# })
-
-# st.write(df)
-
-import streamlit as st
-import numpy as np
-import pandas as pd
-
 myTile = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png"
 myTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 #myTile = "https://service.pdok.nl/rvo/brpgewaspercelen/wms/v1_0?request=GetCapabilities&service=WMS"
@@ -39,8 +21,6 @@ location = streamlit_geolocation()
 st.write('2. Doorloop daarna de stappen links.')
 st.write("Je huidige lokatie is:")
 st.write(f"Lat: {location['latitude']}, Lon: {location['longitude']}")
-
-
 
 
 if location['latitude'] != None:
