@@ -21,7 +21,7 @@ myAttr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoE
 
 def initDB():
 
-    db = st.secrets.connections.postgresql
+    db = st.secrets
     url    = f"postgresql+psycopg2://{db['username']}:{db['password']}@{db['host']}:{db['port']}/{db['database']}"
     return sqlalchemy.create_engine(url, client_encoding='utf8')
 
