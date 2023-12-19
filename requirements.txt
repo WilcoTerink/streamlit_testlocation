@@ -1,4 +1,10 @@
 streamlit_geolocation
 pandas
+numpy
+geopandas
 streamlit_folium
 folium
+psycopg2-binary
+sqlalchemy
+geoalchemy2
+streamlit_js_eval
