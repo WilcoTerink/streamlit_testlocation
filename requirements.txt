@@ -1,3 +1,4 @@
+streamlit==1.29.0
 streamlit_geolocation
 pandas
 numpy
@@ -5,6 +6,6 @@ geopandas
 streamlit_folium
 folium
 psycopg2-binary
-sqlalchemy
-geoalchemy2
+sqlalchemy==2.0.23
+geoalchemy2==0.14.2
 streamlit_js_eval
