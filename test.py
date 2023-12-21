@@ -36,6 +36,7 @@ with col1:
     st.image("./logo-knowh2o-uk.png")
 
     st.text(f"Datum: {pd.Timestamp('now').date().strftime('%d %B %Y')}")
+    st.text("Deze app werkt het beste in landscape mode")
     
     st.markdown("###### Doorloop onderstaande stappen:")
     st.markdown("###### 1. Bepaal je locatie", help="Check je privacy-instellingen in je telefoon om locatiebepaling toe te staan")
