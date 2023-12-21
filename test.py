@@ -38,7 +38,7 @@ with col1:
     st.text(f"Datum: {pd.Timestamp('now').date().strftime('%d %B %Y')}")
     
     st.markdown("###### Doorloop onderstaande stappen:")
-    st.markdown("###### 1. Bepaal je locatie")
+    st.markdown("###### 1. Bepaal je locatie", help="Check je privacy-instellingen in je telefoon om locatiebepaling toe te staan")
 
     location = streamlit_geolocation()
     lat = location['latitude']
