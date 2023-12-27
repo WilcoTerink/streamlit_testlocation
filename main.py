@@ -12,6 +12,10 @@ import geoalchemy2
 import time
 from streamlit_js_eval import streamlit_js_eval
 import haversine as hs
+import json
+from io import StringIO
+#import base64
+#from PIL import Image
 
 # https://folium.streamlit.app/draw_support
 
@@ -95,6 +99,24 @@ with col1:
 
                     opmerking = st.text_area("Opmerkingen:")
 
+                    pic = st.camera_input('Foto toevoegen?')
+                    if pic:
+                        # st.subheader('De volgende foto wordt ge-upload')
+                        # st.image(pic)
+                        #st.write(pic)
+                        # image test to read as bytes
+                        st.write(pic)
+
+                        # # PIL test to convert to np array
+                        # img = Image.open(pic)
+                        # #st.write(img)
+                        # img = np.array(img)
+                        # st.write(img)
+
+                    else:
+                        pic = False
+
+
                     submit = st.button('Upload waarneming')
                     if submit:
                         with st.spinner('Moment a.u.b. Uw waarneming wordt ge-upload...'):
@@ -103,10 +125,10 @@ with col1:
 
                             if engine:
                                 # Create new db entry
-                                df_new = pd.DataFrame(columns=['id', 'lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry_perceel', 'geometry_user'])
+                                df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'picture'])
                                 df_new.loc[0, 'lon'] = loc_lon
                                 df_new.loc[0, 'lat'] = loc_lat
-                                df_new.loc[0, 'geometry_perceel'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
+                                df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
                                 if landgebruik != 'weet ik niet':
                                     df_new.loc[0, 'landgebruik'] = landgebruik
                                 df_new.loc[0, 'beregening'] = beregening
@@ -115,14 +137,30 @@ with col1:
                                     df_new.loc[0, 'bron'] = bron
                                 if len(opmerking) > 0:
                                     df_new.loc[0, 'opmerking'] = opmerking
-                                df_new.loc[0, 'lon'] = lon
-                                df_new.loc[0, 'lat'] = lat
-                                df_new.loc[0, 'geometry_user'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
+                                # df_new.loc[0, 'lon'] = lon
+                                # df_new.loc[0, 'lat'] = lat
+                                # df_new.loc[0, 'geometry_user'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
                                 df_new.drop(['lon', 'lat'], axis=1, inplace=True)
                                 # UTC timestamp
-                                df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')
-                                df_new = gpd.GeoDataFrame(df_new, geometry='geometry_perceel', crs='EPSG:4326')
+                                df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
+                                df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
+                                # Add picture
+                                if pic:
+                                    # Decode bytes to latin1, otherwise it can't be stored in json
+                                    df_new['picture'] = pic.getvalue().decode('latin1')
+                                    #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
                                 st.write(df_new)
+                                # Convert fields to suitable json format and convert df to json
+                                df_new['timestamp'] = df_new['timestamp'].astype(str)                                
+                                js = df_new.to_json()
+
+                                # Create virtual file to push to NEXUS
+                                myFile = StringIO()
+                                myFile.write(js)
+                                st.write(myFile.getvalue())
+                                # Test
+                                with open('mytext.json', 'w') as f:
+                                    f.write(myFile.getvalue())
 
                                 # # Get latest entry from db
                                 # df_latest = pd.read_sql('select * from streamlit_test.crowd_beregening order by timestamp desc limit 3', con=engine)
@@ -150,19 +188,3 @@ with col1:
             m = folium.Map(location=[lat, lon], zoom_start=7.5, tiles=myTile, attr=myAttr)
             # call to render Folium map in Streamlit
             st_data = st_folium(m, width=725)
-
-# # pic = st.sidebar.camera_input('Foto toevoegen?')
-# # if pic:
-# #     st.sidebar.subheader('De volgende foto wordt ge-upload')
-# #     st.sidebar.image(pic)
-# # else:
-# #     pic = False
-
-# # if pic:
-# #     from io import BytesIO
-# #     from PIL import Image
-# #     # Create a binary stream
-# #     image_stream = Image.open(pic)
-# #     st.write(image_stream)
-# #     img_array = np.array(image_stream)
-# #     st.write(img_array)

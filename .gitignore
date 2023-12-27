@@ -1,4 +1,4 @@
 .streamlit/secrets.toml
 test_upload.py
 test_json.py
-mytext.txt
+mytext.json
