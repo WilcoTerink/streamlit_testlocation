@@ -153,7 +153,8 @@ with col1:
                                 # Create virtual file to push to NEXUS
                                 myFile = StringIO()
                                 myFile.write(js)
-                                st.write(myFile.getvalue())
+                                with col2:
+                                    st.write(myFile.getvalue())
                                 
                                 # # Test
                                 # with open('mytext.json', 'w') as f:
