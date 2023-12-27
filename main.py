@@ -97,25 +97,22 @@ with col1:
                     else:
                         beregening_actief = False
 
+                    #TODO: zou mooi zijn als de camera pas geactiveerd wordt na het klikken op een button. Dit is nog niet gelukt..
+                    pic = st.camera_input(":camera: Foto toevoegen? ")
+                    # if pic:
+                    #     # st.subheader('De volgende foto wordt ge-upload')
+                    #     # st.image(pic)
+                    #     #st.write(pic)
+                    #     # image test to read as bytes
+                    #     st.write(pic)
+
+                    #     # # PIL test to convert to np array
+                    #     # img = Image.open(pic)
+                    #     # #st.write(img)
+                    #     # img = np.array(img)
+                    #     # st.write(img)
+
                     opmerking = st.text_area("Opmerkingen:")
-
-                    pic = st.camera_input('Foto toevoegen?')
-                    if pic:
-                        # st.subheader('De volgende foto wordt ge-upload')
-                        # st.image(pic)
-                        #st.write(pic)
-                        # image test to read as bytes
-                        st.write(pic)
-
-                        # # PIL test to convert to np array
-                        # img = Image.open(pic)
-                        # #st.write(img)
-                        # img = np.array(img)
-                        # st.write(img)
-
-                    else:
-                        pic = False
-
 
                     submit = st.button('Upload waarneming')
                     if submit:
@@ -149,7 +146,6 @@ with col1:
                                     # Decode bytes to latin1, otherwise it can't be stored in json
                                     df_new['picture'] = pic.getvalue().decode('latin1')
                                     #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
-                                st.write(df_new)
                                 # Convert fields to suitable json format and convert df to json
                                 df_new['timestamp'] = df_new['timestamp'].astype(str)                                
                                 js = df_new.to_json()
@@ -158,9 +154,10 @@ with col1:
                                 myFile = StringIO()
                                 myFile.write(js)
                                 st.write(myFile.getvalue())
-                                # Test
-                                with open('mytext.json', 'w') as f:
-                                    f.write(myFile.getvalue())
+                                
+                                # # Test
+                                # with open('mytext.json', 'w') as f:
+                                #     f.write(myFile.getvalue())
 
                                 # # Get latest entry from db
                                 # df_latest = pd.read_sql('select * from streamlit_test.crowd_beregening order by timestamp desc limit 3', con=engine)
