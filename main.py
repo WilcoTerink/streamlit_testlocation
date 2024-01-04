@@ -6,42 +6,60 @@ import numpy as np
 from streamlit_folium import st_folium
 import folium
 from folium.plugins import Draw
-import sqlalchemy
-import psycopg2
-import geoalchemy2
+import requests
 import time
 from streamlit_js_eval import streamlit_js_eval
 import haversine as hs
 import json
 from io import StringIO
-#import base64
-#from PIL import Image
 
-# https://folium.streamlit.app/draw_support
-
-myTile = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png"
+#myTile = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png"
 myTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 #myTile = "https://service.pdok.nl/rvo/brpgewaspercelen/wms/v1_0?request=GetCapabilities&service=WMS"
 myAttr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
 
-def initDB():
+def uploadToNexus(f):
     """
-    Initialiseer verbinding met PostgreSQL database
-    """
-    db = st.secrets
-    url    = f"postgresql+psycopg2://{db['username']}:{db['password']}@{db['host']}:{db['port']}/{db['database']}"
-    return sqlalchemy.create_engine(url, client_encoding='utf8')
+    Upload results to NEXUS. The upload is in the form of a JSON StringIO
 
-st.title('Welkom bij de beregeningsdetector')
-st.subheader('Met deze app trachten we de beregening in Nederland in kaart te brengen')
+    f: JSON StringIO
+    """
+
+    # Get credentials
+    auth_header = {'authorization': f'Token {st.secrets['token']}'}
+    datasource_id = st.secrets['datasource_id']
+
+    # Check datasources in your Nexus world that allow manual uploading
+    r = requests.get('https://nexus.stellaspark.com/api/v1/uploads/', headers=auth_header)
+    datasources = r.json()
+
+    for d in datasources:
+        st.write(d)
+
+    # Upload StringIO to NEXUS
+    r = requests.post('https://nexus.stellaspark.com/api/v1/uploads/', 
+                    files={'upload_file': f}, 
+                    data={'datasource': datasource_id},
+                    headers=auth_header)
+    r.raise_for_status() # throw an error if something goes wrong
+    st.write(r)
+
+
+#st.title('Beregeningsmonitor')
+st.markdown("<h1 style='text-align: center; color: #339c5f;'>Beregeningsmonitor</h1>", unsafe_allow_html=True)
+st.markdown("<h5 style='text-align: left;'>Met deze app trachten we de beregening in Nederland in kaart te brengen</h5>", unsafe_allow_html=True)
+#st.subheader('Met deze app trachten we de beregening in Nederland in kaart te brengen')
+
+
 col1, col2 = st.columns([0.32, 0.68])
 
 with col1:
 
+    st.markdown("<h8 style='text-align: center;'>Ontwikkeld door <a href='https://knowh2o.nl' target='_blank'>KnowH2O</a></h8>", unsafe_allow_html=True)
     st.image("./logo-knowh2o-uk.png")
 
     st.text(f"Datum: {pd.Timestamp('now').date().strftime('%d %B %Y')}")
-    st.text("Deze app werkt het beste\nin landscape mode")
+    st.text("Deze app werkt het beste\nin landschapsmodus")
 
     st.markdown("###### Doorloop onderstaande stappen:")
     st.markdown("###### 1. Bepaal je locatie", help="Check je privacy-instellingen in je telefoon om locatiebepaling toe te staan")
@@ -83,10 +101,10 @@ with col1:
 
                     st.markdown('###### 3. Beantwoord de volgende vragen')
 
-                    gewassen = ['kale grond', 'gras', 'mais', 'aardappel', 'suikerbieten', 'weet ik niet']
+                    gewassen = ['kale grond', 'aardappel', 'bloembollen', 'boomteelt', 'cichorei', 'erwten', 'gras', 'graan', 'kool', 'mais', 'spinazie', 'suikerbieten', 'uien', 'wortels', 'weet ik niet']
                     landgebruik = st.selectbox('Landgebruik/gewas?', gewassen, placeholder='weet ik niet', index=len(gewassen)-1)
 
-                    beregening = st.toggle('Haspel en/of sproeier aanwezig op perceel?')
+                    beregening = st.toggle('Haspel of sproeier aanwezig op perceel?')
                     if beregening:
                         
                         beregening_actief = st.toggle('Staat de beregening nu aan?')
@@ -117,58 +135,49 @@ with col1:
                     submit = st.button('Upload waarneming')
                     if submit:
                         with st.spinner('Moment a.u.b. Uw waarneming wordt ge-upload...'):
-                            # Initialize connection.
-                            engine = initDB()
+                            # Create new db entry
+                            df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'picture'])
+                            df_new.loc[0, 'lon'] = loc_lon
+                            df_new.loc[0, 'lat'] = loc_lat
+                            df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
+                            if landgebruik != 'weet ik niet':
+                                df_new.loc[0, 'landgebruik'] = landgebruik
+                            df_new.loc[0, 'beregening'] = beregening
+                            df_new.loc[0, 'beregening_actief'] = beregening_actief
+                            if beregening and (bron != 'weet ik niet'):
+                                df_new.loc[0, 'bron'] = bron
+                            if len(opmerking) > 0:
+                                df_new.loc[0, 'opmerking'] = opmerking
+                            # df_new.loc[0, 'lon'] = lon
+                            # df_new.loc[0, 'lat'] = lat
+                            # df_new.loc[0, 'geometry_user'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
+                            df_new.drop(['lon', 'lat'], axis=1, inplace=True)
+                            # UTC timestamp
+                            df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
+                            df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
+                            # Add picture
+                            if pic:
+                                # Decode bytes to latin1, otherwise it can't be stored in json
+                                df_new['picture'] = pic.getvalue().decode('latin1')
+                                #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
+                            # Convert fields to suitable json format and convert df to json
+                            df_new['timestamp'] = df_new['timestamp'].astype(str)                                
+                            js = df_new.to_json()
 
-                            if engine:
-                                # Create new db entry
-                                df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'picture'])
-                                df_new.loc[0, 'lon'] = loc_lon
-                                df_new.loc[0, 'lat'] = loc_lat
-                                df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
-                                if landgebruik != 'weet ik niet':
-                                    df_new.loc[0, 'landgebruik'] = landgebruik
-                                df_new.loc[0, 'beregening'] = beregening
-                                df_new.loc[0, 'beregening_actief'] = beregening_actief
-                                if beregening and (bron != 'weet ik niet'):
-                                    df_new.loc[0, 'bron'] = bron
-                                if len(opmerking) > 0:
-                                    df_new.loc[0, 'opmerking'] = opmerking
-                                # df_new.loc[0, 'lon'] = lon
-                                # df_new.loc[0, 'lat'] = lat
-                                # df_new.loc[0, 'geometry_user'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
-                                df_new.drop(['lon', 'lat'], axis=1, inplace=True)
-                                # UTC timestamp
-                                df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
-                                df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
-                                # Add picture
-                                if pic:
-                                    # Decode bytes to latin1, otherwise it can't be stored in json
-                                    df_new['picture'] = pic.getvalue().decode('latin1')
-                                    #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
-                                # Convert fields to suitable json format and convert df to json
-                                df_new['timestamp'] = df_new['timestamp'].astype(str)                                
-                                js = df_new.to_json()
+                            # Create virtual file to push to NEXUS
+                            myFile = StringIO()
+                            myFile.write(js)
+                            with col2:
+                                st.write(myFile.getvalue())
+                            
+                            # Upload to NEXUS   
+                            #st.write(myFile.getvalue())
+                            uploadToNexus(myFile)
+                            
+                            # # Test
+                            # with open('mytext.json', 'w') as f:
+                            #     f.write(myFile.getvalue())
 
-                                # Create virtual file to push to NEXUS
-                                myFile = StringIO()
-                                myFile.write(js)
-                                with col2:
-                                    st.write(myFile.getvalue())
-                                
-                                # # Test
-                                # with open('mytext.json', 'w') as f:
-                                #     f.write(myFile.getvalue())
-
-                                # # Get latest entry from db
-                                # df_latest = pd.read_sql('select * from streamlit_test.crowd_beregening order by timestamp desc limit 3', con=engine)
-                                # latest_id = 1
-                                # if len(df_latest) > 0:
-                                #     latest_id = int(df_latest.id.iloc[0])
-                                #     if latest_id is not None:
-                                #         latest_id += 1
-                                # df_new.loc[0, 'id'] = latest_id
-                                # df_new.to_postgis('crowd_beregening', con=engine, schema='streamlit_test', if_exists="append")
                         
                         st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
                         time.sleep(5)

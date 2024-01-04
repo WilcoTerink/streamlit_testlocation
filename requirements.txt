@@ -5,8 +5,9 @@ numpy
 geopandas
 streamlit_folium
 folium
-psycopg2-binary
-sqlalchemy==2.0.23
-geoalchemy2==0.14.2
+#psycopg2-binary
+#sqlalchemy==2.0.23
+#geoalchemy2==0.14.2
+requests
 streamlit_js_eval
 haversine
