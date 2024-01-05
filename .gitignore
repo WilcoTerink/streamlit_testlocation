@@ -2,3 +2,4 @@
 test_upload.py
 test_json.py
 mytext.json
+.DS_Store
