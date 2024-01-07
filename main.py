@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 from streamlit_geolocation import streamlit_geolocation
 import pandas as pd
@@ -22,7 +24,7 @@ def uploadToNexus(f):
     """
     Upload results to NEXUS. The upload is in the form of a JSON StringIO
 
-    f: JSON StringIO
+    f (tuple): (filename, JSON StringIO)
     """
 
     # Get credentials
@@ -167,12 +169,13 @@ with col1:
                             # Create virtual file to push to NEXUS
                             myFile = StringIO()
                             myFile.write(js)
-                            with col2:
-                                st.write(myFile.getvalue())
-                            
+                            # with col2:
+                            #     st.write(myFile.getvalue())
+                            #     # st.write(myFile)
+
                             # Upload to NEXUS   
-                            #st.write(myFile.getvalue())
-                            uploadToNexus(myFile)
+                            uploadToNexus(('myfile.json', myFile.getvalue()))
+                            #uploadToNexus(('myfile.json', js))
                             
                             # # Test
                             # with open('mytext.json', 'w') as f:
