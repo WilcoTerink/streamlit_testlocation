@@ -28,7 +28,7 @@ def uploadToNexus(f):
     """
 
     # Get credentials
-    auth_header = {'authorization': f'Token {st.secrets['token']}'}
+    auth_header = {'authorization': f'Token {st.secrets["token"]}'}
     datasource_id = st.secrets['datasource_id']
 
     # Check datasources in your Nexus world that allow manual uploading
