@@ -13,7 +13,7 @@ import time
 from streamlit_js_eval import streamlit_js_eval
 import haversine as hs
 import json
-from io import StringIO
+# from io import StringIO
 
 #myTile = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png"
 myTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -166,16 +166,16 @@ with col1:
                             df_new['timestamp'] = df_new['timestamp'].astype(str)                                
                             js = df_new.to_json()
 
-                            # Create virtual file to push to NEXUS
-                            myFile = StringIO()
-                            myFile.write(js)
-                            # with col2:
-                            #     st.write(myFile.getvalue())
-                            #     # st.write(myFile)
+                            # # Create virtual file to push to NEXUS
+                            # myFile = StringIO()
+                            # myFile.write(js)
+                            with col2:
+                                st.write(js)
+                                # st.write(myFile)
 
                             # Upload to NEXUS   
-                            uploadToNexus(('myfile.json', myFile.getvalue()))
-                            #uploadToNexus(('myfile.json', js))
+                            #uploadToNexus(('myfile.json', myFile.getvalue()))
+                            uploadToNexus(('myfile.json', js))
                             
                             # # Test
                             # with open('mytext.json', 'w') as f:
@@ -184,7 +184,7 @@ with col1:
                         
                         st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
                         time.sleep(5)
-                        #streamlit_js_eval(js_expressions="parent.window.location.reload()")
+                        # streamlit_js_eval(js_expressions="parent.window.location.reload()")
                 else:
                     st.markdown('###### :red[Selecteer een perceel dichtbij je locatie]')
             else:
