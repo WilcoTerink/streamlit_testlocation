@@ -44,7 +44,7 @@ def uploadToNexus(f):
                     data={'datasource': datasource_id},
                     headers=auth_header)
     r.raise_for_status() # throw an error if something goes wrong
-    st.write(r)
+    # st.write(r)
 
 
 #st.title('Beregeningsmonitor')
