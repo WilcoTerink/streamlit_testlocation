@@ -22,23 +22,23 @@ myAttr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoE
 
 def uploadToNexus(f):
     """
-    Upload results to NEXUS. The upload is in the form of a JSON StringIO
+    Upload results to NEXUS. The upload is in the form of a tuple with filename, json dump
 
-    f (tuple): (filename, JSON StringIO)
+    f (tuple): (filename, json)
     """
 
     # Get credentials
     auth_header = {'authorization': f'Token {st.secrets["token"]}'}
     datasource_id = st.secrets['datasource_id']
 
-    # Check datasources in your Nexus world that allow manual uploading
-    r = requests.get('https://nexus.stellaspark.com/api/v1/uploads/', headers=auth_header)
-    datasources = r.json()
+    # # Check datasources in your Nexus world that allow manual uploading
+    # r = requests.get('https://nexus.stellaspark.com/api/v1/uploads/', headers=auth_header)
+    # datasources = r.json()
 
-    for d in datasources:
-        st.write(d)
+    # for d in datasources:
+    #     st.write(d)
 
-    # Upload StringIO to NEXUS
+    # Upload to NEXUS
     r = requests.post('https://nexus.stellaspark.com/api/v1/uploads/', 
                     files={'upload_file': f}, 
                     data={'datasource': datasource_id},
@@ -184,7 +184,7 @@ with col1:
                         
                         st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
                         time.sleep(5)
-                        # streamlit_js_eval(js_expressions="parent.window.location.reload()")
+                        streamlit_js_eval(js_expressions="parent.window.location.reload()")
                 else:
                     st.markdown('###### :red[Selecteer een perceel dichtbij je locatie]')
             else:
