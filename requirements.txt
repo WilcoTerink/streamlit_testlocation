@@ -1,5 +1,4 @@
 streamlit==1.29.0
-python==3.12.1
 streamlit_geolocation
 pandas
 numpy
