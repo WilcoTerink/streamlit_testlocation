@@ -13,11 +13,8 @@ import time
 from streamlit_js_eval import streamlit_js_eval
 import haversine as hs
 import json
-# from io import StringIO
 
-#myTile = "https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png"
 myTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-#myTile = "https://service.pdok.nl/rvo/brpgewaspercelen/wms/v1_0?request=GetCapabilities&service=WMS"
 myAttr = "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
 
 def uploadToNexus(f):
@@ -46,15 +43,10 @@ def uploadToNexus(f):
     r.raise_for_status() # throw an error if something goes wrong
     # st.write(r)
 
-
-#st.title('Beregeningsmonitor')
 st.markdown("<h1 style='text-align: center; color: #339c5f;'>Beregeningsmonitor</h1>", unsafe_allow_html=True)
 st.markdown("<h5 style='text-align: left;'>Met deze app trachten we de beregening in Nederland in kaart te brengen</h5>", unsafe_allow_html=True)
-#st.subheader('Met deze app trachten we de beregening in Nederland in kaart te brengen')
-
 
 col1, col2 = st.columns([0.32, 0.68])
-
 with col1:
 
     st.markdown("<h8 style='text-align: center;'>Ontwikkeld door <a href='https://knowh2o.nl' target='_blank'>KnowH2O</a></h8>", unsafe_allow_html=True)
@@ -81,7 +73,8 @@ with col1:
             myLocation = folium.Marker([lat, lon], tooltip="mijn locatie", icon=icon).add_to(m)
             
             st.caption(f"Locatie nauwkeurigheid is {location['accuracy']} m")
-            st_data = st_folium(m, width=725, center=[lat, lon], zoom=30)
+            #st_data = st_folium(m, width=725, center=[lat, lon], zoom=30)
+            st_data = st_folium(m, center=[lat, lon], zoom=30)
 
         # Selecteer/ markeer punt voor waarneming
         st.markdown('###### 2. Markeer maximaal 1 perceel op de kaart voor waarneming', help="Klik hiervoor eerst de 'marker' knop op de kaart onder de zoom knoppen")
@@ -138,7 +131,7 @@ with col1:
                     if submit:
                         with st.spinner('Moment a.u.b. Uw waarneming wordt ge-upload...'):
                             # Create new db entry
-                            df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'picture'])
+                            df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'afstand_gebruiker_perceel_m', 'picture'])
                             df_new.loc[0, 'lon'] = loc_lon
                             df_new.loc[0, 'lat'] = loc_lat
                             df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
@@ -150,10 +143,8 @@ with col1:
                                 df_new.loc[0, 'bron'] = bron
                             if len(opmerking) > 0:
                                 df_new.loc[0, 'opmerking'] = opmerking
-                            # df_new.loc[0, 'lon'] = lon
-                            # df_new.loc[0, 'lat'] = lat
-                            # df_new.loc[0, 'geometry_user'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
                             df_new.drop(['lon', 'lat'], axis=1, inplace=True)
+                            df_new.loc[0, 'afstand_gebruiker_perceel_m'] = round(dist, 2)
                             # UTC timestamp
                             df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
                             df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
@@ -176,11 +167,6 @@ with col1:
                             # Upload to NEXUS   
                             #uploadToNexus(('myfile.json', myFile.getvalue()))
                             uploadToNexus(('myfile.json', js))
-                            
-                            # # Test
-                            # with open('mytext.json', 'w') as f:
-                            #     f.write(myFile.getvalue())
-
                         
                         st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
                         time.sleep(5)
@@ -197,4 +183,5 @@ with col1:
             lon = 5.8
             m = folium.Map(location=[lat, lon], zoom_start=7.5, tiles=myTile, attr=myAttr)
             # call to render Folium map in Streamlit
-            st_data = st_folium(m, width=725)
+            #st_data = st_folium(m, width=725)
+            st_data = st_folium(m)
