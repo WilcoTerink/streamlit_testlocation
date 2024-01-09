@@ -73,7 +73,6 @@ with col1:
             myLocation = folium.Marker([lat, lon], tooltip="mijn locatie", icon=icon).add_to(m)
             
             st.caption(f"Locatie nauwkeurigheid is {location['accuracy']} m")
-            #st_data = st_folium(m, width=725, center=[lat, lon], zoom=30)
             st_data = st_folium(m, center=[lat, lon], zoom=30)
 
         # Selecteer/ markeer punt voor waarneming
@@ -88,91 +87,91 @@ with col1:
         
         if markedLocation:
             if nPoints == 1:
-                if dist <= 100:
-                    # Laat rest van formulier zien zodra waarneming is gemarkeerd op kaart en voldoet aan de eisen.
-                    loc_lon = markedLocation[0]
-                    loc_lat = markedLocation[1]
-                    st.text((loc_lat, loc_lon))
+                #if dist <= 100:
+                # Laat rest van formulier zien zodra waarneming is gemarkeerd op kaart en voldoet aan de eisen.
+                loc_lon = markedLocation[0]
+                loc_lat = markedLocation[1]
+                st.text((loc_lat, loc_lon))
 
-                    st.markdown('###### 3. Beantwoord de volgende vragen')
+                st.markdown('###### 3. Beantwoord de volgende vragen')
 
-                    gewassen = ['kale grond', 'aardappel', 'bloembollen', 'boomteelt', 'cichorei', 'erwten', 'gras', 'graan', 'kool', 'mais', 'spinazie', 'suikerbieten', 'uien', 'wortels', 'weet ik niet']
-                    landgebruik = st.selectbox('Landgebruik/gewas?', gewassen, placeholder='weet ik niet', index=len(gewassen)-1)
+                gewassen = ['kale grond', 'aardappel', 'bloembollen', 'boomteelt', 'cichorei', 'erwten', 'gras', 'graan', 'kool', 'mais', 'spinazie', 'suikerbieten', 'uien', 'wortels', 'weet ik niet']
+                landgebruik = st.selectbox('Landgebruik/gewas?', gewassen, placeholder='weet ik niet', index=len(gewassen)-1)
 
-                    beregening = st.toggle('Haspel of sproeier aanwezig op perceel?')
-                    if beregening:
-                        
-                        beregening_actief = st.toggle('Staat de beregening nu aan?')
+                beregening = st.toggle('Haspel of sproeier aanwezig op perceel?')
+                if beregening:
+                    
+                    beregening_actief = st.toggle('Staat de beregening nu aan?')
 
-                        bron = st.selectbox(
-                            'Wat is de bron van beregening?',
-                            ['grondwater', 'oppervlaktewater', 'weet ik niet'], placeholder='weet ik niet', index=2)
-                    else:
-                        beregening_actief = False
-
-                    #TODO: zou mooi zijn als de camera pas geactiveerd wordt na het klikken op een button. Dit is nog niet gelukt..
-                    pic = st.camera_input(":camera: Foto toevoegen? ")
-                    # if pic:
-                    #     # st.subheader('De volgende foto wordt ge-upload')
-                    #     # st.image(pic)
-                    #     #st.write(pic)
-                    #     # image test to read as bytes
-                    #     st.write(pic)
-
-                    #     # # PIL test to convert to np array
-                    #     # img = Image.open(pic)
-                    #     # #st.write(img)
-                    #     # img = np.array(img)
-                    #     # st.write(img)
-
-                    opmerking = st.text_area("Opmerkingen:")
-
-                    submit = st.button('Upload waarneming')
-                    if submit:
-                        with st.spinner('Moment a.u.b. Uw waarneming wordt ge-upload...'):
-                            # Create new db entry
-                            df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'afstand_gebruiker_perceel_m', 'picture'])
-                            df_new.loc[0, 'lon'] = loc_lon
-                            df_new.loc[0, 'lat'] = loc_lat
-                            df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
-                            if landgebruik != 'weet ik niet':
-                                df_new.loc[0, 'landgebruik'] = landgebruik
-                            df_new.loc[0, 'beregening'] = beregening
-                            df_new.loc[0, 'beregening_actief'] = beregening_actief
-                            if beregening and (bron != 'weet ik niet'):
-                                df_new.loc[0, 'bron'] = bron
-                            if len(opmerking) > 0:
-                                df_new.loc[0, 'opmerking'] = opmerking
-                            df_new.drop(['lon', 'lat'], axis=1, inplace=True)
-                            df_new.loc[0, 'afstand_gebruiker_perceel_m'] = round(dist, 2)
-                            # UTC timestamp
-                            df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
-                            df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
-                            # Add picture
-                            if pic:
-                                # Decode bytes to latin1, otherwise it can't be stored in json
-                                df_new['picture'] = pic.getvalue().decode('latin1')
-                                #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
-                            # Convert fields to suitable json format and convert df to json
-                            df_new['timestamp'] = df_new['timestamp'].astype(str)                                
-                            js = df_new.to_json()
-
-                            # # Create virtual file to push to NEXUS
-                            # myFile = StringIO()
-                            # myFile.write(js)
-                            with col2:
-                                st.write(js)
-                                # st.write(myFile)
-
-                            # Upload to NEXUS   
-                            #uploadToNexus(('myfile.json', myFile.getvalue()))
-                            uploadToNexus(('myfile.json', js))
-                        
-                        st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
-                        time.sleep(5)
-                        streamlit_js_eval(js_expressions="parent.window.location.reload()")
+                    bron = st.selectbox(
+                        'Wat is de bron van beregening?',
+                        ['grondwater', 'oppervlaktewater', 'weet ik niet'], placeholder='weet ik niet', index=2)
                 else:
-                    st.markdown('###### :red[Selecteer een perceel dichtbij je locatie]')
+                    beregening_actief = False
+
+                #TODO: zou mooi zijn als de camera pas geactiveerd wordt na het klikken op een button. Dit is nog niet gelukt..
+                pic = st.camera_input(":camera: Foto toevoegen? ")
+                # if pic:
+                #     # st.subheader('De volgende foto wordt ge-upload')
+                #     # st.image(pic)
+                #     #st.write(pic)
+                #     # image test to read as bytes
+                #     st.write(pic)
+
+                #     # # PIL test to convert to np array
+                #     # img = Image.open(pic)
+                #     # #st.write(img)
+                #     # img = np.array(img)
+                #     # st.write(img)
+
+                opmerking = st.text_area("Opmerkingen:")
+
+                submit = st.button('Upload waarneming')
+                if submit:
+                    with st.spinner('Moment a.u.b. Uw waarneming wordt ge-upload...'):
+                        # Create new db entry
+                        df_new = pd.DataFrame(columns=['lon', 'lat', 'landgebruik', 'beregening', 'beregening_actief', 'bron', 'opmerking', 'geometry', 'afstand_gebruiker_perceel_m', 'picture'])
+                        df_new.loc[0, 'lon'] = loc_lon
+                        df_new.loc[0, 'lat'] = loc_lat
+                        df_new.loc[0, 'geometry'] = gpd.points_from_xy(df_new.lon, df_new.lat, crs='EPSG:4326')[0]
+                        if landgebruik != 'weet ik niet':
+                            df_new.loc[0, 'landgebruik'] = landgebruik
+                        df_new.loc[0, 'beregening'] = beregening
+                        df_new.loc[0, 'beregening_actief'] = beregening_actief
+                        if beregening and (bron != 'weet ik niet'):
+                            df_new.loc[0, 'bron'] = bron
+                        if len(opmerking) > 0:
+                            df_new.loc[0, 'opmerking'] = opmerking
+                        df_new.drop(['lon', 'lat'], axis=1, inplace=True)
+                        df_new.loc[0, 'afstand_gebruiker_perceel_m'] = round(dist, 2)
+                        # UTC timestamp
+                        df_new['timestamp'] = pd.Timestamp.utcnow()     #pd.Timestamp('now')                                
+                        df_new = gpd.GeoDataFrame(df_new, geometry='geometry', crs='EPSG:4326')
+                        # Add picture
+                        if pic:
+                            # Decode bytes to latin1, otherwise it can't be stored in json
+                            df_new['picture'] = pic.getvalue().decode('latin1')
+                            #df_new['picture'] = base64.b64encode(pic.getvalue()) #.decode('utf-8')
+                        # Convert fields to suitable json format and convert df to json
+                        df_new['timestamp'] = df_new['timestamp'].astype(str)                                
+                        js = df_new.to_json()
+
+                        # # Create virtual file to push to NEXUS
+                        # myFile = StringIO()
+                        # myFile.write(js)
+                        with col2:
+                            st.write(js)
+                            # st.write(myFile)
+
+                        # Upload to NEXUS   
+                        #uploadToNexus(('myfile.json', myFile.getvalue()))
+                        uploadToNexus(('myfile.json', js))
+                    
+                    st.success('Waarneming is ge-upload naar het beregeningsportaal. We danken u voor uw medewerking. App wordt binnen enkele seconden herladen.')
+                    time.sleep(5)
+                    streamlit_js_eval(js_expressions="parent.window.location.reload()")
+                # else:
+                #     st.markdown('###### :red[Selecteer een perceel dichtbij je locatie]')
             else:
                 st.markdown('###### :red[Markeer maximaal 1 locatie]')
 
@@ -183,5 +182,4 @@ with col1:
             lon = 5.8
             m = folium.Map(location=[lat, lon], zoom_start=7.5, tiles=myTile, attr=myAttr)
             # call to render Folium map in Streamlit
-            #st_data = st_folium(m, width=725)
             st_data = st_folium(m)
